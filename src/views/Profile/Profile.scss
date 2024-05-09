@@ -1,0 +1,97 @@
+.profile-section{
+    width: 100%;
+    min-height: calc(100vh - 80px);
+    padding: 20px 6%;
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    .profile-card{
+        position: sticky;
+        top: 100px;
+        border-radius: 8px;
+        max-width: 300px;
+        width: 300px;
+        height: max-content;
+        .edit-profile,
+        .delete-profile{
+            overflow: hidden;
+            border: 1px solid rgba(0,0,0,0.1);
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            .delete-btn{
+                width: 100%;
+                height: 35px;
+                border-radius: 5px;
+                border: none;
+                outline: none;
+                background-color: rgb(246, 88, 88);
+                color: white;
+                cursor: pointer;
+                &:hover{
+                    background-color: rgb(177, 65, 65);
+                }
+            }
+            h4{
+                margin-bottom: 10px;
+                font-size: 18px;
+                font-weight: 500;
+            }
+            .user-image{
+                .profile-image{
+                    width: 200px;
+                    height: 200px;
+                    border: 1px solid rgba(0,0,0,0.1);
+                    border-radius: 8px;
+                    &:hover{
+                        filter: brightness(0.9);
+                    }
+                }
+            }
+            .user_description{
+                padding-top: 20px;
+                form{
+                    .email,
+                    .username{
+                        display: flex;
+                        flex-direction: column;
+                        margin-bottom: 15px;
+                        label{
+                            color: rgba(0,0,0,0.7);
+                            margin-bottom: 2px;
+                        }
+                        input{
+                            width: 100%;
+                            height: 40px;
+                            padding: 0 10px;
+                            border-radius: 6px;
+                            border: 1px solid rgba(0,0,0,0.4);
+                            outline: none;
+                        }
+                    }
+                    button{
+                        width: 100%;
+                        height: 40px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        border-radius: 8px;
+                        outline: none;
+                        border: none;
+                        background-color: #8c2de2;
+                        color: white;
+                        cursor: pointer;
+                        &:hover{
+                            background-color: #6b25ad;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    .blog-container{
+        .blog-card{
+            margin-top: 0;
+        }
+    }
+}

@@ -1,335 +1,229 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import "./ViewBlogs.scss";
-import ip from "../../../ip-config/ip";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import Blog from "../../Blogs/ViewBlogs/Blog/Blog";
+import './ViewBlogs.scss';
+import ip from '../../../ip-config/ip';
 import swal from 'sweetalert2';
-import moment from 'moment'
+import 'boxicons'
+import NavBar from '../../../components/NavBar/NavBar'
+const ViewBlogs = () => {
+    const [posts, setPosts] = useState([]);
+    const [sortMethod, setSortMethod] = useState('random');
+    const [pageNumber, setPageNumber] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
+    const [totalPosts, setTotalPosts] = useState(0);
+    const [showModal, setShowModal] = useState(false);
+    const [newPost, setNewPost] = useState({
+        authorId: 'AuthorID',
+        title: '',
+        description: '',
+        image: null
+    });
+    const [imagePreview, setImagePreview] = useState('');
+    const [formErrors, setFormErrors] = useState({});
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-const ViewBlogs = ({
-    blogId, 
-    authorName, 
-    authorImage, 
-    postImage, 
-    postTitle,
-    description, 
-    popularity: initialPopularity,
-    postLikeCount, 
-    isLiked: initialIsLiked,
-    isDisliked: initialIsDisliked,
-    postDislikeCount,
-    date,
-    commentCount = 0,
-    redirectPath
-}) => {
-    const [likeCount, setLikeCount] = useState(postLikeCount);
-    const [dislikeCount, setDislikeCount] = useState(postDislikeCount);
-    const [liked, setLiked] = useState(initialIsLiked);
-    const [disliked, setDisliked] = useState(initialIsDisliked);
-    const [popularity, setPopularity] = useState(initialPopularity);
-    const navigate = useNavigate();
-    const currentUser = localStorage.getItem('name');
-    const UPVOTE_WEIGHT = 2;
-    const DOWNVOTE_WEIGHT = -1;
-    const COMMENT_WEIGHT = 1;
-    const handleEdit = () => {
-        swal.fire({
-            title: 'What would you like to edit?',
-            showDenyButton: true,
-            showCancelButton: true,
-            confirmButtonText: `Image`,
-            denyButtonText: `Title & Body`,
-        }).then((result) => {
-            if (result.isConfirmed) {
-                editImage();
-            } else if (result.isDenied) {
-                editFields();
-            }
-        });
-    };
-    const editImage = () => {
-        swal.fire({
-            title: 'Upload new image',
-            input: 'file',
-            inputAttributes: {
-                'accept': 'image/*',
-                'aria-label': 'Upload your blog image'
-            },
-            showCancelButton: true,
-            confirmButtonText: 'Upload',
-            preConfirm: (file) => {
-                if (file) {
-                    const formData = new FormData();
-                    formData.append('ImageFile', file);
-                    updateBlogImage(formData);
-                }
-            }
-        });
-    };
-    const editFields = () => {
-        swal.fire({
-            title: 'Edit Title and Body',
-            html: '<input id="title" class="swal2-input" placeholder="Title">' +
-                  '<textarea id="body" class="swal2-textarea" placeholder="Body"></textarea>',
-            focusConfirm: false,
-            preConfirm: () => {
-                const title = swal.getPopup().querySelector('#title').value;
-                const body = swal.getPopup().querySelector('#body').value;
-                if (!title || !body) {
-                    swal.showValidationMessage(`Please enter title and body`);
-                }
-                return { title: title, body: body };
-            },
-            showCancelButton: true,
-            confirmButtonText: 'Update',
-        }).then((result) => {
-            if (result.isConfirmed) {
-                updateBlogFields(result.value);
-            }
-        });
-    };
-    
-    const updateBlogFields = ({ title, body }) => {
+    useEffect(() => {
         const token = localStorage.getItem('token');
-        const url = `${ip}/api/BlogPost/update/${blogId}`;
-        const headers = new Headers({
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-        });
-    
-        fetch(url, {
-            method: 'PUT',
-            headers: headers,
-            body: JSON.stringify({ Title: title, Body: body })
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Failed to update post');
-            }
-            return response.json();
-        })
-        .then(data =>{swal.fire('Success!', 'Post updated successfully.', 'success')
-        window.location.reload();
-        })
-        .catch(error => {
-            swal.fire({
-                icon: 'error',
-                title: 'Failed to update post',
-                text: error.toString()
+        setIsLoggedIn(!!token);
+        fetchPosts();
+    }, [sortMethod, pageSize, pageNumber]);
+
+    const fetchPosts = async () => {
+        const sortType = sortMethod !== 'random' ? sortMethod : null;
+        const userId = localStorage.getItem('id');
+
+        try {
+            const response = await axios.get(`${ip}/api/BlogPost/all`, {
+                params: {
+                    sortType,
+                    pageNumber,
+                    pageSize
+                }
             });
-        });
-    };
-    
-    const updateBlogImage = (formData) => {
-        const token = localStorage.getItem('token');
-        const url = `${ip}/api/BlogPost/update/image/${blogId}`;
-    
-        fetch(url, {
-            method: 'PUT',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            },
-            body: formData
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Failed to update image');
-            }
-            return response.json();
-        })
-        .then(data => {
-            swal.fire('Success!', 'Image updated successfully.', 'success')
-            window.location.reload();
-
+            const fetchedPosts = response.data.blogPostsWithReactions.map(bp => {
+                const isLiked = bp.reactions.some(r => r.userId == userId && r.type === 0);
+                const isDisliked = bp.reactions.some(r => r.userId == userId && r.type === 1);
+                console.log(isLiked)
+                console.log(isDisliked)
+                return {
+                    id: bp.blog.id,
+                    title: bp.blog.title,
+                    authorName: bp.blog.author.userName,
+                    authorImage: bp.blog.author.image,
+                    postImage: bp.blog.imageUrl,
+                    description: bp.blog.body,
+                    popularity: bp.popularity,
+                    postLikeCount: bp.reactions.filter(r => r.type === 0).length,
+                    postDislikeCount: bp.reactions.filter(r => r.type === 1).length,
+                    commentCount: bp.comments.length,
+                    date: bp.blog.postDate,
+                    isLiked,       // added isLiked flag
+                    isDisliked     // added isDisliked flag
+                };
+            });
+            setPosts(fetchedPosts);
+            setTotalPosts(response.data.paginationMetadata.totalCount);
+        } catch (error) {
+            console.error("Error fetching posts:", error);
         }
-    )
-        .catch(error => {
-            console.log(error)
-            swal.fire({
-                icon: 'error',
-                title: 'Failed to update image',
-                text: error.toString()
-            });
-        });
     };
-    
-    const handleCommentButtonClick = () => {
-        navigate(`/comments/${blogId}`); 
-    };
-    const handleDelete = async () => {
-        swal.fire({
-            title: 'Are you sure?',
-            text: "You won't be able to revert this!",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#d33',
-            confirmButtonText: 'Yes, delete it!'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                const token = localStorage.getItem('token');
-                const url = `/api/BlogPost/delete/${blogId}`;
-    
-                fetch(url, {
-                    method: 'DELETE',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                })
-                .then(response => {
-                    console.log(response.json)
-                    console.log(response.text)
-                    if (!response.ok) {
-                        throw new Error('Failed to delete the blog post');
-                    }
-                    swal.fire(
-                        'Deleted!',
-                        'Your post has been deleted.',
-                        'success'
-                    );
-                    window.location.reload();
 
-                })
-                .catch(error => {
+
+    const handleSortChange = (event) => {
+        setSortMethod(event.target.value);
+        setPageNumber(1);
+    };
+
+    const handleShowMore = () => {
+        setPageSize(pageSize + 10);
+    };
+
+    const handleImageChange = (event) => {
+        const file = event.target.files[0];
+        if (file) {
+            setNewPost(prevState => ({ ...prevState, image: file }));
+            const reader = new FileReader();
+            reader.onload = () => setImagePreview(reader.result);
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleInputChange = (event) => {
+        const { name, value } = event.target;
+        setNewPost(prevState => ({ ...prevState, [name]: value }));
+    };
+
+    const validateForm = () => {
+        let errors = {};
+        if (!newPost.title.trim()) errors.title = "Title cannot be empty.";
+        if (!newPost.description.trim()) errors.description = "Description cannot be empty.";
+        if (!newPost.image) errors.image = "Image must be uploaded.";
+        setFormErrors(errors);
+        return Object.keys(errors).length === 0;
+    };
+
+    const handleSubmit = async (event) => {
+        event.preventDefault();
+        if (validateForm()) {
+            const formData = new FormData();
+            formData.append('Title', newPost.title);
+            formData.append('Body', newPost.description);
+            formData.append('ImageFile', newPost.image);
+
+            try {
+                const response = await axios.post(`${ip}/api/BlogPost/add/`, formData, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+                if (response.status === 200) {
+                    resetFormAndCloseModal();
+                    fetchPosts();
                     swal.fire({
-                        icon: 'error',
-                        title: 'Failed to delete the post',
-                        text: error.toString()
+                        icon: 'success',
+                        title: "Blog added successfully."
                     });
-                    console.error('Error deleting the post:', error);
+                } else {
+                    throw new Error("Failed to add post"); // This will be caught by the catch block
+                }
+            } catch (error) {
+                console.error("Error adding post:", error);
+                setFormErrors({ submit: "Failed to add post." });
+                swal.fire({
+                    icon: 'error',
+                    title: "Failed to add post."
                 });
             }
-        });
-    };
- 
-    const checkAuthAndAct = (action) => {
-        const token = localStorage.getItem('token');
-        if (!token) {
-            swal.fire({
-                icon: 'error',
-                title: 'Please log in to perform this action.'
-            });
-            setTimeout(() => navigate('/login'), 1500);
         } else {
-            action();
-        }
-    };
-
-    const sendReactionToServer = async (reactionType) => {
-        const token = localStorage.getItem('token');
-        const url = `${ip}/api/BlogReaction/addblogreaction/${blogId}`;
-    
-        try {
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `bearer ${token}`
-                },
-                body: JSON.stringify({ userReaction: reactionType })
-            });
-    
-            if (!response.ok) {
-                throw new Error('Failed to post reaction');
-            }
-            const data = await response.text();
-            swal.fire({
-                icon: 'success',
-                title: data
-            });
-            return data;
-        } catch (error) {
             swal.fire({
                 icon: 'error',
-                title: 'Failed to update reaction'
+                title: "Validation failed, please check the form."
             });
-            console.error('Error posting reaction:', error);
         }
     };
-    
-    const handleLike = () => {
-        checkAuthAndAct(async () => {
-            let newLikeCount = liked ? likeCount - 1 : likeCount + 1;
-            let newDislikeCount = disliked ? dislikeCount - 1 : dislikeCount;
 
-            setLiked(!liked);
-            if (disliked) {
-                setDisliked(false);
-            }
-            setLikeCount(newLikeCount);
-            setDislikeCount(newDislikeCount);
-            
-            await sendReactionToServer('UpVote');
-            setPopularity(calculatePopularity(newLikeCount, newDislikeCount));
-        });
-    };
-    
-    const handleDislike = () => {
-        checkAuthAndAct(async () => {
-            let newDislikeCount = disliked ? dislikeCount - 1 : dislikeCount + 1;
-            let newLikeCount = liked ? likeCount - 1 : likeCount;
-            setDisliked(!disliked);
-            if (liked) {
-                setLiked(false);
-            }
-            setDislikeCount(newDislikeCount);
-            setLikeCount(newLikeCount);
-            await sendReactionToServer( 'DownVote');
-            setPopularity(calculatePopularity(newLikeCount, newDislikeCount));
-        });
-    };
 
-    const calculatePopularity = (newLikeCount, newDislikeCount) => {
-        return (newLikeCount * UPVOTE_WEIGHT) + 
-               (newDislikeCount * DOWNVOTE_WEIGHT) + 
-               (commentCount * COMMENT_WEIGHT);
-    };
-
-    const resolveImageUrl = (url) => {
-        if (!url) return null;
-        return url.startsWith('http') ? url : `${ip}${url}`;
+    const resetFormAndCloseModal = () => {
+        setNewPost({ authorId: '', title: '', description: '', image: null });
+        setImagePreview('');
+        setFormErrors({});
+        setShowModal(false);
     };
 
     return (
-        <div className="post">
-            <div className="post-header">
-                <div className="image_author">
-                    <img src={resolveImageUrl(authorImage)} alt={authorName} className="author-image" />
-                    <div className="author_name_with_date">
-                        <span className="author-name">{authorName}</span>
-                        <span className="blog-date"> {moment(date)}</span>
+        <>
+            <NavBar />
+            <div>
+                <div className="sort_posts_drop_down">
+                    <div className="sort_posts_drop_down_wrapper">
+                        <box-icon name='sort' color="blue"></box-icon>
+                        <select onChange={handleSortChange} value={sortMethod} className="sort-dropdown">
+                            <option value="recency">Recency</option>
+                            <option value="popularity">Popularity</option>
+                            <option value="random">Random</option>
+                        </select>
                     </div>
+                    {isLoggedIn && (
+                        <div className="add_post_btn" onClick={() => setShowModal(true)}>
+                            <box-icon name='plus-circle' color="white"></box-icon>
+                            <p>Add Posts</p>
+                        </div>
+                    )}
                 </div>
-                {currentUser === authorName && (
-                    <div className="post_action_btns">
-                        <box-icon name='edit' type='solid' color="blue" onClick={handleEdit}></box-icon>
-                        <box-icon type='solid' name='trash' color="red" onClick={handleDelete}></box-icon>
+                {posts.map(post => (
+                    <Blog
+                        key={post.id}
+                        blogId={post.id}
+                        postTitle={post.title}
+                        authorName={post.authorName}
+                        authorImage={post.authorImage}
+                        postImage={post.postImage}
+                        description={post.description}
+                        popularity={post.popularity}
+                        postLikeCount={post.postLikeCount}
+                        postDislikeCount={post.postDislikeCount}
+                        commentCount={post.commentCount}
+                        isLiked={post.isLiked}
+                        isDisliked={post.isDisliked}
+                        date={post.date}
+                    />
+                ))}
+                <div className="show-more-div" onClick={handleShowMore}>
+                    <hr />
+                    <p>Show More</p>
+                </div>
 
+                {showModal && (
+                    <div className="modal">
+                        <div className="modal_content">
+                            <div className="modal_head">
+                                <h2>Add a New Blog</h2>
+                                <box-icon name='x' onClick={resetFormAndCloseModal} color="red" size="lg"></box-icon>
+                            </div>
+                            <form onSubmit={handleSubmit}>
+                                <label>Title:</label>
+                                <input type="text" name="title" value={newPost.title} onChange={handleInputChange} />
+                                {formErrors.title && <p className="error">{formErrors.title}</p>}
+
+                                <label>Description:</label>
+                                <textarea name="description" value={newPost.description} onChange={handleInputChange} />
+                                {formErrors.description && <p className="error">{formErrors.description}</p>}
+
+                                <label>Upload Image:</label>
+                                <input type="file" onChange={handleImageChange} />
+                                {formErrors.image && <p className="error">{formErrors.image}</p>}
+                                {imagePreview && <img src={imagePreview} alt="Preview" style={{ width: '100px', height: '100px' }} />}
+
+                                <button type="submit">Submit Blog</button>
+                                {formErrors.submit && <p className="error">{formErrors.submit}</p>}
+                            </form>
+                        </div>
                     </div>
                 )}
             </div>
-            <img src={resolveImageUrl(postImage)} alt="Post" className="post-image" />
-            <div className="blog-title">{postTitle}</div>
-            <div className="post-description">{description}</div>
-            <div className="post-actions">
-                <button className="like-button" onClick={handleLike}>
-                    <box-icon name='like' type={liked ? 'solid' : 'regular'} color='blue'></box-icon>
-                    <span>{likeCount}</span>
-                </button>
-                <button className="dislike-button" onClick={handleDislike}>
-                    <box-icon name='dislike' type={disliked ? 'solid' : 'regular'} color='red'></box-icon>
-                    <span>{dislikeCount}</span>
-                </button>
-                <button className="comment-button" onClick={handleCommentButtonClick} >
-                    <box-icon name='message-rounded' type='solid' color='gray'></box-icon>
-                    Comments ({commentCount})
-                </button>
-                <button className="popularity-button">
-                    <box-icon name='star' type='solid' color="orange"></box-icon>
-                    {popularity}
-                </button>
-            </div>
-        </div>
+        </>
     );
-};
+}
 
 export default ViewBlogs;
