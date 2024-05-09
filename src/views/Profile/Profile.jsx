@@ -5,8 +5,10 @@ import './Profile.scss';
 import ip from '../../ip-config/ip';
 import Swal from 'sweetalert2';
 import NavBar from '../../components/NavBar/NavBar';
+import { useNavigate } from 'react-router-dom';
 
 const Profile = () => {
+    const navigate = useNavigate()
     const [userName, setUserName] = useState(localStorage.getItem('name'));
     const userId = localStorage.getItem('id');
     const userEmail = localStorage.getItem('email');
@@ -122,10 +124,11 @@ const Profile = () => {
     const deleteUser = async () => {
         console.log(userId);
         try {
-            const response = await axios.delete(`${ip}/api/Account`, {
+            const response = await axios.delete(`${ip}/api/Account/delete-user`, {
                 data: { userId: userId },  // Include data in the config object
                 headers: {
-                    'Content-Type': 'application/json'  // Ensure the content type is set if required by the server
+                    'Content-Type': 'application/json',  // Ensure the content type is set if required by the server
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
                 }
             });
             console.log('Delete data:', response.data);
@@ -139,6 +142,9 @@ const Profile = () => {
                 showConfirmButton: false,
                 showCloseButton: true,
             });
+            localStorage.clear()
+            sessionStorage.clear()
+            navigate('/home')
         } catch (error) {
             console.log('Error:', error);
             Swal.fire('Error', error.response?.data?.message || 'Failed to delete user', 'error');

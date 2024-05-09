@@ -5,17 +5,20 @@ import RegisterBlogger from './views/UserAuthentication/RegisterBlogger/Register
 import Login from './views/UserAuthentication/Login/Login';
 import ViewBlogs from './views/Blogs/ViewBlogs/ViewBlogs';
 import Profile from './views/Profile/Profile';
+import BlogDetail from './views/Blogs/BlogDetail/BlogDetail';
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path='/blogs' element={<ViewBlogs />} />
+        <Route path='/comments/:blogId' element={<BlogDetail />} />
 
         <Route path='/register' element={<RegisterBlogger />} />
         <Route path='/login' element={<Login />} />
 
         <Route path='/profile' element={<Profile />} />
+
 
       </Routes>
     </BrowserRouter>
