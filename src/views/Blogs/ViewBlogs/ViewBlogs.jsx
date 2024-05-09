@@ -6,6 +6,9 @@ import ip from '../../../ip-config/ip';
 import swal from 'sweetalert2';
 import 'boxicons'
 import NavBar from '../../../components/NavBar/NavBar'
+import AddBlog from "../AddBlog/AddBlog";
+import { FaSort } from "react-icons/fa";
+
 const ViewBlogs = () => {
     const [posts, setPosts] = useState([]);
     const [sortMethod, setSortMethod] = useState('random');
@@ -117,12 +120,18 @@ const ViewBlogs = () => {
                         'Authorization': `Bearer ${localStorage.getItem('token')}`
                     }
                 });
-                if (response.status === 200) {
+                if (response.status === 201) {
                     resetFormAndCloseModal();
                     fetchPosts();
                     swal.fire({
-                        icon: 'success',
-                        title: "Blog added successfully."
+                        title: "Post added successfully.",
+                        icon: "success",
+                        toast: true,
+                        timer: 3000,
+                        position: "top-right",
+                        timerProgressBar: true,
+                        showConfirmButton: false,
+                        showCloseButton: true,
                     });
                 } else {
                     throw new Error("Failed to add post"); // This will be caught by the catch block
@@ -154,19 +163,19 @@ const ViewBlogs = () => {
     return (
         <>
             <NavBar />
-            <div>
-                <div className="sort_posts_drop_down">
-                    <div className="sort_posts_drop_down_wrapper">
-                        <box-icon name='sort' color="blue"></box-icon>
-                        <select onChange={handleSortChange} value={sortMethod} className="sort-dropdown">
+            <section className="blogs-section">
+                <div className="blog-options">
+                    <div className="sort-container">
+                        <label htmlFor="sort-dropdown">Sort <FaSort /></label>
+                        <select onChange={handleSortChange} value={sortMethod} className="sort-dropdown" id="sort-dropdown">
                             <option value="recency">Recency</option>
                             <option value="popularity">Popularity</option>
                             <option value="random">Random</option>
                         </select>
                     </div>
                     {isLoggedIn && (
-                        <div className="add_post_btn" onClick={() => setShowModal(true)}>
-                            <box-icon name='plus-circle' color="white"></box-icon>
+                        <div className="add-btn" onClick={() => setShowModal(true)}>
+                            <box-icon name='plus-circle' color="#00ff00"></box-icon>
                             <p>Add Posts</p>
                         </div>
                     )}
@@ -187,6 +196,7 @@ const ViewBlogs = () => {
                         isLiked={post.isLiked}
                         isDisliked={post.isDisliked}
                         date={post.date}
+                        fetchPosts={fetchPosts}
                     />
                 ))}
                 <div className="show-more-div" onClick={handleShowMore}>
@@ -195,33 +205,9 @@ const ViewBlogs = () => {
                 </div>
 
                 {showModal && (
-                    <div className="modal">
-                        <div className="modal_content">
-                            <div className="modal_head">
-                                <h2>Add a New Blog</h2>
-                                <box-icon name='x' onClick={resetFormAndCloseModal} color="red" size="lg"></box-icon>
-                            </div>
-                            <form onSubmit={handleSubmit}>
-                                <label>Title:</label>
-                                <input type="text" name="title" value={newPost.title} onChange={handleInputChange} />
-                                {formErrors.title && <p className="error">{formErrors.title}</p>}
-
-                                <label>Description:</label>
-                                <textarea name="description" value={newPost.description} onChange={handleInputChange} />
-                                {formErrors.description && <p className="error">{formErrors.description}</p>}
-
-                                <label>Upload Image:</label>
-                                <input type="file" onChange={handleImageChange} />
-                                {formErrors.image && <p className="error">{formErrors.image}</p>}
-                                {imagePreview && <img src={imagePreview} alt="Preview" style={{ width: '100px', height: '100px' }} />}
-
-                                <button type="submit">Submit Blog</button>
-                                {formErrors.submit && <p className="error">{formErrors.submit}</p>}
-                            </form>
-                        </div>
-                    </div>
+                    <AddBlog fetchPosts={fetchPosts} resetFormAndCloseModal={resetFormAndCloseModal} />
                 )}
-            </div>
+            </section>
         </>
     );
 }

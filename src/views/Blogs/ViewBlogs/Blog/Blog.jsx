@@ -5,7 +5,8 @@ import ip from "../../../../ip-config/ip";
 import moment from "moment/moment";
 import swal from 'sweetalert2';
 import 'boxicons'
-
+import { FaRegGrinStars } from "react-icons/fa";
+import EditBlog from "../../EditBlog/EditBlog";
 const Blog = ({
     blogId,
     authorName,
@@ -20,7 +21,8 @@ const Blog = ({
     postDislikeCount,
     date,
     commentCount = 0,
-    redirectPath
+    redirectPath,
+    fetchPosts,
 }) => {
     const [likeCount, setLikeCount] = useState(postLikeCount);
     const [dislikeCount, setDislikeCount] = useState(postDislikeCount);
@@ -33,19 +35,20 @@ const Blog = ({
     const DOWNVOTE_WEIGHT = -1;
     const COMMENT_WEIGHT = 1;
     const handleEdit = () => {
-        swal.fire({
-            title: 'What would you like to edit?',
-            showDenyButton: true,
-            showCancelButton: true,
-            confirmButtonText: `Image`,
-            denyButtonText: `Title & Body`,
-        }).then((result) => {
-            if (result.isConfirmed) {
-                editImage();
-            } else if (result.isDenied) {
-                editFields();
-            }
-        });
+        // swal.fire({
+        //     title: 'What would you like to edit?',
+        //     showDenyButton: true,
+        //     showCancelButton: true,
+        //     confirmButtonText: `Image`,
+        //     denyButtonText: `Title & Body`,
+        // }).then((result) => {
+        //     if (result.isConfirmed) {
+        //         editImage();
+        //     } else if (result.isDenied) {
+        //         editFields();
+        //     }
+        // });
+        setShowEditForm(true)
     };
     const editImage = () => {
         swal.fire({
@@ -283,8 +286,11 @@ const Blog = ({
         return url.startsWith('http') ? url : `${ip}${url}`;
     };
 
+    const [showEditForm, setShowEditForm] = useState(false)
+
     return (
-        <div className="blog-card">
+        <>
+            <div className="blog-card">
             <div className="blog-header">
                 <div className="blogger-details">
                     <div className="profile-image" style={authorImage ? {
@@ -331,11 +337,14 @@ const Blog = ({
                     Comments&nbsp;({commentCount})
                 </button>
                 <button className="popularity-button">
-                    <box-icon name='star' type='solid' color="orange"></box-icon>
+                    {/* <box-icon name='star' type='solid' color="orange"></box-icon> */}
+                    <FaRegGrinStars />
                     <span>{popularity && popularity>0?popularity:0}</span>
                 </button>
             </div>
         </div>
+        {showEditForm && (<EditBlog fetchPosts={fetchPosts} setShowEditForm={setShowEditForm} blogId={blogId} blogTitle={postTitle} blogDesc={description} blogImg={postImage} />)}
+        </>
     );
 };
 
