@@ -1,0 +1,93 @@
+.image {
+    width: 100px;
+    height: 100px;
+    background-color: rgba(0, 0, 0, 0.1);
+  }
+  
+  .register-blogger {
+    width: 100%;
+    min-height: calc(100vh - 80px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 6%;
+  
+    form {
+      width: 400px;
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+  
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+  
+    .profile {
+      text-align: center;
+      margin-bottom: 20px;
+  
+      .upload-photo-div {
+        display: inline-block;
+        position: relative;
+      }
+  
+      .image {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        border: 2px solid #ccc;
+        cursor: pointer;
+  
+        &:hover {
+          border-color: #007bff;
+        }
+      }
+  
+      input[type="file"] {
+        display: none;
+      }
+    }
+  
+    .username,
+    .email,
+    .password,
+    .confirm-password {
+      margin-bottom: 20px;
+  
+      label {
+        display: block;
+        margin-bottom: 5px;
+        span{
+            color: red;
+            font-weight: 600;
+        }
+      }
+  
+      input[type="text"],
+      input[type="email"],
+      input[type="password"] {
+        width: calc(100% - 12px);
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+      }
+    }
+  
+    input[type="submit"] {
+      width: 100%;
+      padding: 10px;
+      border: none;
+      background-color: #007bff;
+      color: #fff;
+      border-radius: 5px;
+      cursor: pointer;
+  
+      &:hover {
+        background-color: #0056b3;
+      }
+    }
+  }
+  
